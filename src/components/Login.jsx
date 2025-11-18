@@ -6,7 +6,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 
-
 export function Login() {
   const navigate = useNavigate(); 
   const [errorMessage,setErrorMessage] = useState('');
@@ -27,9 +26,9 @@ export function Login() {
     // },
     onSubmit: async (values) => {
       try {
-        const response = await axios.post("http://localhost:8200/login", values); // Update URL if needed
+        const response = await axios.post("http://localhost:8200/login", values);
         if (response.data.code === 1) {
-          // console.log(response.data.message);
+          localStorage.setItem('token',response.data.token)
           navigate('/dashboard'); 
         } else {
           setErrorMessage(response.data.message)
@@ -91,6 +90,7 @@ export function Login() {
                       style={{ borderColor: "rgb(18, 18, 18)" , fontSize:"small"}}
                       onChange={loginForm.handleChange}
                       onBlur={loginForm.handleBlur}
+                      value={loginForm.values.email}
                     />
                     {loginForm.touched.email && loginForm.errors.email && (<p className="error">{loginForm.errors.email}</p> )}    
            
@@ -104,6 +104,7 @@ export function Login() {
                     style={{ borderColor: "rgb(18, 18, 18)", fontSize: "small" }}
                     onChange={loginForm.handleChange}
                     onBlur={loginForm.handleBlur}
+                    value={loginForm.values.password}
                   />
 
                     {loginForm.touched.password && loginForm.errors.password && (<p className="error">{loginForm.errors.password}</p>) }

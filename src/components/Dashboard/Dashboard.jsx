@@ -1,16 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useEffect } from "react";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function Dashboard() {
   const [post, setPost] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [activePostId, setActivePostId] = useState(null);
-  const [comment, setComment] = useState("");
+  const [comment, setComment] = useState({});
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate('');
 
   const handleCommentSubmit = (postId) => {
     if (!comment[postId]?.trim()) {
@@ -20,21 +21,31 @@ export function Dashboard() {
     console.log("Comment submitted:", comment[postId]);
     setComment({ ...comment, [postId]: "" });
   };
+
+  const handleLogout = () => {
+    console.log("Click");
+    localStorage.removeItem("token");
+  };
+
   useEffect(() => {
     fetchPost();
   }, []);
 
   const fetchPost = async () => {
+    setLoading(true);
+    setErrorMessage("");
     try {
       const response = await axios.post("http://localhost:8200/postlist");
-      if (response.data.code === 1) {
-        setPost(response.data.data);
+      if (response?.data?.code === 1) {
+        setPost(response.data.data || []);
       } else {
-        console.log("error");
-        setErrorMessage(response.data.message);
+        const msg = response?.data?.message || "Failed to load posts";
+        setErrorMessage(msg);
       }
-    } catch (error) {
+    } catch (err) {
+      console.error("Fetch error:", err);
       setErrorMessage("Failed to fetch data.");
+    } finally {
       setLoading(false);
     }
   };
@@ -87,9 +98,19 @@ export function Dashboard() {
             </form>
 
             <div className="text-end">
-              <button type="button" className="btn btn-outline-light me-2">
-                Login
-              </button>
+              {token ? (
+                <button
+                  type="button"
+                  className="btn btn-outline-light me-2"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+              ) : (
+                <button type="button" className="btn btn-outline-light me-2">
+                  Login
+                </button>
+              )}
               <button type="button" className="btn btn-warning">
                 Sign-up
               </button>
@@ -98,7 +119,11 @@ export function Dashboard() {
         </div>
       </header>
       {/* body */}
-      {post.length > 0 ? (
+      {loading ? (
+        <div className="p-4">Loading...</div>
+      ) : post.length === 0 ? (
+        <div className="p-4">No Posts Found</div>
+      ) : (
         <>
           <img
             src="img/Avenger-Age of ultron.jpg"
@@ -107,12 +132,12 @@ export function Dashboard() {
           />
           <div className="d-flex flex-wrap">
             {post.map((post, index) => (
-              <div className="cards m-2" style={{ width: "18rem" }} key={index}>
+              <div className="cards m-2" style={{ width: "18rem" }} key={post.id || index}>
                 <div className="card_inner">
                   <div className="carsd post-card">
                     <div className="d-flex align-items-center p-2">
                       <img
-                        src={`img/${post.image}`}
+                        src={`/img/${post.image}`}
                         alt="User"
                         className="profile-img me-2"
                         style={{ width: "10%" }}
@@ -177,8 +202,6 @@ export function Dashboard() {
             ))}
           </div>
         </>
-      ) : (
-        <div>No Posts Found</div>
       )}
 
       <div className="container">
